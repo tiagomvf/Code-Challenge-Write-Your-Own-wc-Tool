@@ -109,26 +109,6 @@ public class WcCommand implements Runnable {
 
     }
 
-    private void printResult(Wc wc) {
-        String result =
-            (printLineCount ? wc.lineCount + " " : "") +
-                (printWordCount ? wc.wordCount + " " : "") +
-                (printCharCount ? wc.charCount + " " : "") +
-                (printByteCount ? wc.byteCount + " " : "") +
-                wc.file;
-        System.out.println(result);
-    }
-
-    private void printResult(String file, int lineCount, int wordCount, int charCount, int byteCount) {
-        String result =
-            (printLineCount ? lineCount + " " : "") +
-                (printWordCount ? wordCount + " " : "") +
-                (printCharCount ? charCount + " " : "") +
-                (printByteCount ? byteCount + " " : "") +
-                file;
-        System.out.println(result);
-    }
-
     private static int getWordCount(String currentLine) {
         long count = 0L;
         for (String s : currentLine.split("\\s+")) {
