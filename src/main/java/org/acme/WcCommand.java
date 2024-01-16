@@ -5,7 +5,10 @@ import picocli.CommandLine.Command;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.Scanner;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 
 @Command(name = "wc", mixinStandardHelpOptions = true)
 public class WcCommand implements Runnable {
@@ -32,25 +35,31 @@ public class WcCommand implements Runnable {
         }
     }
 
+    private static final String LINE_SEPARATOR_PATTERN = "\r\n|[\n\r\u2028\u2029\u0085]";
+    private static final String LINE_PATTERN = ".*("+LINE_SEPARATOR_PATTERN+")|.+$";
+
     private void countBytes(File file){
-        int byteCount = 0;
-        int charCount = 0;
-        int lineCount = 0;
-        int wordCount = 0;
+        int byteCount = 0, charCount = 0, lineCount = 0 , wordCount = 0;
         try (Scanner scanner = new Scanner(file)) {
-           while (scanner.hasNextLine()) {
+            var list =
+                scanner
+                    .findAll(Pattern.compile(LINE_PATTERN))
+                    .map(MatchResult::group)
+                    .toList();
+            for(String currentLine: list){
                lineCount++;
-               String currentLine = scanner.nextLine();
-               // todo: fix do handle cases when new line string has size other then 2 (eg. Unix)
-               byteCount += currentLine.getBytes().length + 2;
-               // todo: fix do handle cases when new line string has size other then 2 (eg. Unix)
-               charCount += currentLine.length() + 2;
+               byteCount += currentLine.getBytes().length;
+               charCount += currentLine.length();
                wordCount += getWordCount(currentLine);
            }
+           printResult(file, lineCount, wordCount, charCount, byteCount);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e); // TODO: handle exception
         }
 
+    }
+
+    private void printResult(File file, int lineCount, int wordCount, int charCount, int byteCount) {
         String result =
             (printLineCount ? lineCount + " " : "") +
             (printWordCount ? wordCount + " " : "") +
