@@ -39,7 +39,7 @@ public class WcCommand implements Runnable {
 
     private void wc(File file){
         try (Scanner scanner = new Scanner(file)) {
-            var list =
+            var counting =
                 scanner
                     .findAll(Pattern.compile(LINE_PATTERN))
                     .map(MatchResult::group)
@@ -53,7 +53,7 @@ public class WcCommand implements Runnable {
                             x[3] + y[2], // wordCount
                         }
                     );
-            printResult(file.getPath(), list[0], list[1], list[2], list[3]);
+            printResult(file.getPath(), counting[0], counting[1], counting[2], counting[3]);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e); // TODO: handle exception
         }
