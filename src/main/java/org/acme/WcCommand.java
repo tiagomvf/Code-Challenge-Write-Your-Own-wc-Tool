@@ -5,6 +5,8 @@ import picocli.CommandLine.Command;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -29,44 +31,70 @@ public class WcCommand implements Runnable {
         if(!(printByteCount || printCharCount || printWordCount || printLineCount)) {
             printLineCount = printWordCount = printByteCount = true;
         }
-        for (File file : files == null ? new File[0] : files) {
-            wc(file);
+        List<Wc> list =
+            Arrays.stream((files == null ? new File[0] : files))
+                .map(this::wc)
+                .peek(this::printResult)
+                .toList();
+
+        if(list.size() > 1){
+            Wc totals = getTotals(list);
+            printResult(totals);
         }
     }
+
+    private static Wc getTotals(List<Wc> list) {
+        Wc totals = list.stream().reduce(
+            new Wc("total", 0, 0, 0, 0),
+            (x, y) -> new Wc(
+                x.file,
+                x.lineCount + y.lineCount,
+                x.wordCount + y.wordCount,
+                x.charCount + y.charCount,
+                x.byteCount + y.byteCount
+            )
+        );
+        return totals;
+    }
+
 
     private static final String LINE_SEPARATOR_PATTERN = "\r\n|[\n\r\u2028\u2029\u0085]";
     private static final String LINE_PATTERN = ".*("+LINE_SEPARATOR_PATTERN+")|.+$";
 
-    private void wc(File file){
+    private Wc wc(File file){
         try (Scanner scanner = new Scanner(file)) {
             var counting =
                 scanner
                     .findAll(Pattern.compile(LINE_PATTERN))
                     .map(MatchResult::group)
-                    .map(s -> new int[]{s.getBytes().length, s.length(), getWordCount(s)})
+                    .map(s -> new int[]{getWordCount(s), s.length(),s.getBytes().length})
                     .reduce(
                         new int[]{0,0,0,0},
                         (x, y) -> new int[]{
                             x[0] + 1,    // lineCount
-                            x[1] + y[0], // byteCount
+                            x[1] + y[0], // wordCount
                             x[2] + y[1], // charCount
-                            x[3] + y[2], // wordCount
+                            x[3] + y[2], // byteCount
                         }
                     );
-            printResult(file.getPath(), counting[0], counting[1], counting[2], counting[3]);
+            return new Wc(file.getPath(), counting[0], counting[1], counting[2], counting[3]);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e); // TODO: handle exception
         }
 
     }
 
-    private void printResult(String file, int lineCount, int byteCount, int charCount, int wordCount) {
+    private void printResult(Wc wc) {
+        printResult(wc.file, wc.lineCount, wc.wordCount, wc.charCount, wc.byteCount);
+    }
+
+    private void printResult(String file, int lineCount, int wordCount, int charCount, int byteCount) {
         String result =
             (printLineCount ? lineCount + " " : "") +
-            (printWordCount ? wordCount + " " : "") +
-            (printCharCount ? charCount + " " : "") +
-            (printByteCount ? byteCount + " " : "") +
-            file;
+                (printWordCount ? wordCount + " " : "") +
+                (printCharCount ? charCount + " " : "") +
+                (printByteCount ? byteCount + " " : "") +
+                file;
         System.out.println(result);
     }
 
@@ -79,4 +107,6 @@ public class WcCommand implements Runnable {
         }
         return (int) count;
     }
+
+    record Wc(String file, int lineCount, int wordCount, int charCount, int byteCount){ };
 }
