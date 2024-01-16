@@ -47,24 +47,19 @@ public class WcCommand implements Runnable {
            resultArray = Arrays.copyOf(wc, wc.length);
         }
 
-        int maxLineCount = 0;
-        int maxWordCount = 0;
-        int maxCharCount = 0;
         int maxByteCount = 0;
         for (Wc value : resultArray) {
-            maxLineCount = (int) Math.max(maxLineCount, Math.log10(value.lineCount) + 1);
-            maxWordCount = (int) Math.max(maxWordCount, Math.log10(value.wordCount) + 1);
-            maxCharCount = (int) Math.max(maxCharCount, Math.log10(value.charCount) + 1);
-            maxByteCount = (int) Math.max(maxByteCount, Math.log10(value.byteCount) + 1);
+            maxByteCount = Math.max(maxByteCount, value.byteCount);
         }
 
         for (Wc w: resultArray) {
+            int numberLength = ("" + maxByteCount).length();
             String result =
-                (printLineCount ? String.format("  %"+(maxLineCount)+"d", w.lineCount) : "") +
-                (printWordCount ? String.format("\t%"+(maxWordCount)+"d", w.wordCount) : "") +
-                (printCharCount ? String.format("\t%"+(maxCharCount)+"d", w.charCount) : "") +
-                (printByteCount ? String.format("\t%"+(maxByteCount)+"d", w.byteCount) : "") +
-                " " + w.file;
+                (printLineCount ? String.format("%"+numberLength+"d ", w.lineCount) : "") +
+                (printWordCount ? String.format("%"+numberLength+"d ", w.wordCount) : "") +
+                (printCharCount ? String.format("%"+numberLength+"d ", w.charCount) : "") +
+                (printByteCount ? String.format("%"+numberLength+"d ", w.byteCount) : "") +
+                w.file;
             System.out.println(result);
         }
     }
