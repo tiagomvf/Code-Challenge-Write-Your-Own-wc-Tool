@@ -5,7 +5,6 @@ import picocli.CommandLine.Command;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.List;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -31,41 +30,43 @@ public class WcCommand implements Runnable {
             printLineCount = printWordCount = printByteCount = true;
         }
         for (File file : files == null ? new File[0] : files) {
-            countBytes(file);
+            wc(file);
         }
     }
 
     private static final String LINE_SEPARATOR_PATTERN = "\r\n|[\n\r\u2028\u2029\u0085]";
     private static final String LINE_PATTERN = ".*("+LINE_SEPARATOR_PATTERN+")|.+$";
 
-    private void countBytes(File file){
-        int byteCount = 0, charCount = 0, lineCount = 0 , wordCount = 0;
+    private void wc(File file){
         try (Scanner scanner = new Scanner(file)) {
             var list =
                 scanner
                     .findAll(Pattern.compile(LINE_PATTERN))
                     .map(MatchResult::group)
-                    .toList();
-            for(String currentLine: list){
-               lineCount++;
-               byteCount += currentLine.getBytes().length;
-               charCount += currentLine.length();
-               wordCount += getWordCount(currentLine);
-           }
-           printResult(file, lineCount, wordCount, charCount, byteCount);
+                    .map(s -> new int[]{s.getBytes().length, s.length(), getWordCount(s)})
+                    .reduce(
+                        new int[]{0,0,0,0},
+                        (x, y) -> new int[]{
+                            x[0] + 1,    // lineCount
+                            x[1] + y[0], // byteCount
+                            x[2] + y[1], // charCount
+                            x[3] + y[2], // wordCount
+                        }
+                    );
+            printResult(file.getPath(), list[0], list[1], list[2], list[3]);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e); // TODO: handle exception
         }
 
     }
 
-    private void printResult(File file, int lineCount, int wordCount, int charCount, int byteCount) {
+    private void printResult(String file, int lineCount, int byteCount, int charCount, int wordCount) {
         String result =
             (printLineCount ? lineCount + " " : "") +
             (printWordCount ? wordCount + " " : "") +
             (printCharCount ? charCount + " " : "") +
             (printByteCount ? byteCount + " " : "") +
-            file.getName();
+            file;
         System.out.println(result);
     }
 
