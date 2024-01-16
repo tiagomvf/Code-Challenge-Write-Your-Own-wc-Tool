@@ -6,7 +6,7 @@ import picocli.CommandLine.Command;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Formatter;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -31,20 +31,47 @@ public class WcCommand implements Runnable {
         if(!(printByteCount || printCharCount || printWordCount || printLineCount)) {
             printLineCount = printWordCount = printByteCount = true;
         }
-        List<Wc> list =
+        Wc[] list =
             Arrays.stream((files == null ? new File[0] : files))
                 .map(this::wc)
-                .peek(this::printResult)
-                .toList();
+                .toArray(Wc[]::new);
 
-        if(list.size() > 1){
-            Wc totals = getTotals(list);
-            printResult(totals);
+        printResult(list);
+    }
+
+    private void printResult(Wc[] wc){
+        Wc[] resultArray;
+        if(wc.length > 1){
+            resultArray = Arrays.copyOf(wc, wc.length + 1);
+            resultArray[wc.length] = getTotals(wc);
+        }else{
+           resultArray = Arrays.copyOf(wc, wc.length);
+        }
+
+        int maxLineCount = 0;
+        int maxWordCount = 0;
+        int maxCharCount = 0;
+        int maxByteCount = 0;
+        for (Wc value : resultArray) {
+            maxLineCount = (int) Math.max(maxLineCount, Math.log10(value.lineCount) + 1);
+            maxWordCount = (int) Math.max(maxWordCount, Math.log10(value.wordCount) + 1);
+            maxCharCount = (int) Math.max(maxCharCount, Math.log10(value.charCount) + 1);
+            maxByteCount = (int) Math.max(maxByteCount, Math.log10(value.byteCount) + 1);
+        }
+
+        for (Wc w: resultArray) {
+            String result =
+                (printLineCount ? String.format("  %"+(maxLineCount)+"d", w.lineCount) : "") +
+                (printWordCount ? String.format("\t%"+(maxWordCount)+"d", w.wordCount) : "") +
+                (printCharCount ? String.format("\t%"+(maxCharCount)+"d", w.charCount) : "") +
+                (printByteCount ? String.format("\t%"+(maxByteCount)+"d", w.byteCount) : "") +
+                " " + w.file;
+            System.out.println(result);
         }
     }
 
-    private static Wc getTotals(List<Wc> list) {
-        Wc totals = list.stream().reduce(
+    private static Wc getTotals(Wc[] list) {
+        return Arrays.stream(list).reduce(
             new Wc("total", 0, 0, 0, 0),
             (x, y) -> new Wc(
                 x.file,
@@ -54,7 +81,6 @@ public class WcCommand implements Runnable {
                 x.byteCount + y.byteCount
             )
         );
-        return totals;
     }
 
 
@@ -85,7 +111,13 @@ public class WcCommand implements Runnable {
     }
 
     private void printResult(Wc wc) {
-        printResult(wc.file, wc.lineCount, wc.wordCount, wc.charCount, wc.byteCount);
+        String result =
+            (printLineCount ? wc.lineCount + " " : "") +
+                (printWordCount ? wc.wordCount + " " : "") +
+                (printCharCount ? wc.charCount + " " : "") +
+                (printByteCount ? wc.byteCount + " " : "") +
+                wc.file;
+        System.out.println(result);
     }
 
     private void printResult(String file, int lineCount, int wordCount, int charCount, int byteCount) {
