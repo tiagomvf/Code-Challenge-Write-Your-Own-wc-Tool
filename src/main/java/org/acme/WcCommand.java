@@ -11,19 +11,21 @@ import java.util.Scanner;
 public class WcCommand implements Runnable {
 
     @CommandLine.Option(names = {"-c", "--bytes"}, arity = "0", description = "print the byte counts")
-    boolean printBytesCount;
+    boolean printByteCount;
+    @CommandLine.Option(names = {"-m", "--chars"}, arity = "0", description = "print the character counts")
+    boolean printCharCount;
     @CommandLine.Option(names = {"-l", "--lines"}, arity = "0", description = "print the newline counts")
-    boolean printLinesCount;
+    boolean printLineCount;
     @CommandLine.Option(names = {"-w", "--words"}, arity = "0", description = "print the word counts")
-    boolean printWordsCount;
+    boolean printWordCount;
 
     @CommandLine.Parameters()
     File[] files;
 
     @Override
     public void run() {
-        if(!(printBytesCount || printWordsCount || printLinesCount)) {
-            printLinesCount = printWordsCount = printBytesCount = true;
+        if(!(printByteCount || printCharCount || printWordCount || printLineCount)) {
+            printLineCount = printWordCount = printByteCount = true;
         }
         for (File file : files == null ? new File[0] : files) {
             countBytes(file);
@@ -32,23 +34,28 @@ public class WcCommand implements Runnable {
 
     private void countBytes(File file){
         int byteCount = 0;
-        int linesCount = 0;
+        int charCount = 0;
+        int lineCount = 0;
         int wordCount = 0;
         try (Scanner scanner = new Scanner(file)) {
            while (scanner.hasNextLine()) {
-               linesCount++;
+               lineCount++;
                String currentLine = scanner.nextLine();
-               byteCount+= currentLine.getBytes().length + 2;
-               wordCount+= getWordCount(currentLine);
+               // todo: fix do handle cases when new line string has size other then 2 (eg. Unix)
+               byteCount += currentLine.getBytes().length + 2;
+               // todo: fix do handle cases when new line string has size other then 2 (eg. Unix)
+               charCount += currentLine.length() + 2;
+               wordCount += getWordCount(currentLine);
            }
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e); // TODO: handle exception
         }
 
         String result =
-            (printLinesCount ? linesCount + " " : "") +
-            (printWordsCount ? wordCount + " " : "") +
-            (printBytesCount ? byteCount + " " : "") +
+            (printLineCount ? lineCount + " " : "") +
+            (printWordCount ? wordCount + " " : "") +
+            (printCharCount ? charCount + " " : "") +
+            (printByteCount ? byteCount + " " : "") +
             file.getName();
         System.out.println(result);
     }
