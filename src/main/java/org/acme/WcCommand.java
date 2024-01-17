@@ -39,21 +39,17 @@ public class WcCommand implements Runnable {
     }
 
     private void printResult(Wc[] wc){
+        var totals = getTotals(wc);
         Wc[] resultArray;
         if(wc.length > 1){
             resultArray = Arrays.copyOf(wc, wc.length + 1);
-            resultArray[wc.length] = getTotals(wc);
+            resultArray[wc.length] = totals;
         }else{
            resultArray = Arrays.copyOf(wc, wc.length);
         }
 
-        int maxByteCount = 0;
-        for (Wc value : resultArray) {
-            maxByteCount = Math.max(maxByteCount, value.byteCount);
-        }
-
         for (Wc w: resultArray) {
-            int numberLength = ("" + maxByteCount).length();
+            int numberLength = ("" + totals.byteCount).length();
             String result =
                 (printLineCount ? String.format("%"+numberLength+"d ", w.lineCount) : "") +
                 (printWordCount ? String.format("%"+numberLength+"d ", w.wordCount) : "") +
