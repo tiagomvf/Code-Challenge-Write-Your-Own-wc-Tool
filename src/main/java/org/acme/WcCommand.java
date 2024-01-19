@@ -23,7 +23,7 @@ public class WcCommand implements Runnable {
     boolean printWordCount;
 
     @CommandLine.Parameters()
-    File[] files;
+    String[] files;
 
     @Override
     public void run() {
@@ -31,7 +31,7 @@ public class WcCommand implements Runnable {
             printLineCount = printWordCount = printByteCount = true;
         }
         Wc[] list =
-            Arrays.stream((files == null ? new File[0] : files))
+            Arrays.stream((files == null ? new String[]{""} : files))
                 .map(this::wc)
                 .toArray(Wc[]::new);
 
@@ -77,8 +77,8 @@ public class WcCommand implements Runnable {
     private static final String LINE_SEPARATOR_PATTERN = "\r\n|[\n\r\u2028\u2029\u0085]";
     private static final String LINE_PATTERN = ".*("+LINE_SEPARATOR_PATTERN+")|.+$";
 
-    private Wc wc(File file){
-        try (Scanner scanner = new Scanner(file)) {
+    private Wc wc(String source){
+        try (Scanner scanner = getScanner(source)) {
             var counting =
                 scanner
                     .findAll(Pattern.compile(LINE_PATTERN))
@@ -93,11 +93,19 @@ public class WcCommand implements Runnable {
                             x[3] + y[2], // byteCount
                         }
                     );
-            return new Wc(file.getPath(), counting[0], counting[1], counting[2], counting[3]);
+            return new Wc(source, counting[0], counting[1], counting[2], counting[3]);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e); // TODO: handle exception
         }
 
+    }
+
+    private static Scanner getScanner(String source) throws FileNotFoundException {
+        if(source.isEmpty() || source.equals("-")){
+            return new Scanner(System.in);
+        }else {
+            return new Scanner(new File(source));
+        }
     }
 
     private static int getWordCount(String currentLine) {
@@ -110,5 +118,5 @@ public class WcCommand implements Runnable {
         return (int) count;
     }
 
-    record Wc(String file, int lineCount, int wordCount, int charCount, int byteCount){ };
+    record Wc(String file, int lineCount, int wordCount, int charCount, int byteCount){ }
 }
