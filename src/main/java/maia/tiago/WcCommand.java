@@ -1,16 +1,20 @@
-package org.acme;
+package maia.tiago;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
-@Command(name = "wc", mixinStandardHelpOptions = true)
+@Command(
+    name = "wc",
+    mixinStandardHelpOptions = true, versionProvider = VersionProvider.class)
 public class WcCommand implements Runnable {
 
     @CommandLine.Option(names = {"-c", "--bytes"}, arity = "0", description = "print the byte counts")
@@ -21,12 +25,14 @@ public class WcCommand implements Runnable {
     boolean printLineCount;
     @CommandLine.Option(names = {"-w", "--words"}, arity = "0", description = "print the word counts")
     boolean printWordCount;
-
     @CommandLine.Parameters()
     String[] files;
 
+
     @Override
     public void run() {
+
+
         if(!(printByteCount || printCharCount || printWordCount || printLineCount)) {
             printLineCount = printWordCount = printByteCount = true;
         }
