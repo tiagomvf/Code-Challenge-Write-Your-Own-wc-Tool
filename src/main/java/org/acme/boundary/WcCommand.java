@@ -14,7 +14,7 @@ import java.util.Arrays;
 import static org.acme.control.Printer.printResult;
 
 @TopCommand
-@Command(name = "wc", mixinStandardHelpOptions = true)
+@Command(name = "wc", mixinStandardHelpOptions = true, versionProvider = VersionProvider.class)
 public class WcCommand implements Runnable {
 
     @CommandLine.Option(names = {"-c", "--bytes"}, arity = "0", description = "print the byte counts")

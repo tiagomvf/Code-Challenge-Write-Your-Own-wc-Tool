@@ -1,4 +1,4 @@
-package maia.tiago;
+package org.acme.boundary;
 
 import jakarta.enterprise.context.Dependent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
